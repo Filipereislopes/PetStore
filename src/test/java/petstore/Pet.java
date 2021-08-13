@@ -7,6 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
+
 
 public class Pet {
     String uri = "https://petstore.swagger.io/v2/pet";
@@ -17,12 +20,12 @@ public class Pet {
     }
 
     //Incluir - Create - Post
-    @Test // Identifica o M√©todo ou fun√ß√£o como um teste para o testNG
+    @Test (priority =1) // Identifica o MÈtodo ou funÁ„o como um teste para o testNG
     public void incluirPet() throws IOException {
         String JsonBody = lerJson("db/pet1.json");
 
         // Sintaxe Gherkin
-        //Dado - Quando - Ent√£o
+        //Dado - Quando - Ent„o
         //Given - When - Then
 
         given() //Dado
@@ -35,11 +38,78 @@ public class Pet {
 
                 .post(uri)
 
-        .then() //Ent√£o
+        .then() //Ent„o
 
                 .log().all()
                 .statusCode(200)
+                .body("name", is ("Rex"))
+                .body("status", is("available"))
+                .body("category.name", is("dog"))
+                .body("tags.name", contains("VACI"))
         ;
     }
 
+    @Test (priority = 2)
+    public void consultarPet(){
+        String petId = "9326888661";
+        String token =
+
+        given()
+                .contentType("application/json")
+                .log().all()
+
+        .when()
+                .get(uri + "/" + petId)
+
+        .then()
+                .log().all()
+                .statusCode(200)
+                .body("name", is ("Rex"))
+                .body("status", is("available"))
+                .body("category.name", is("dog"))
+                .extract()
+                .path("category.name")
+
+        ;
+
+        System.out.println("o token È " + token);
+    }
+    @Test (priority = 3)
+    public void alterarPet() throws IOException {
+        String jsonBody = lerJson("db/pet2.json");
+
+        given()
+                .contentType("application/json")
+                .log().all()
+                .body(jsonBody)
+
+        .when()
+                .put(uri)
+
+        .then()
+                .log().all()
+                .statusCode(200)
+                .body("name", is("Rex"))
+                .body("status", is("sold"))
+        ;
+    }
+
+    @Test (priority = 4)
+    public void excluirPet(){
+        String petId = "9326888661";
+
+        given()
+                .contentType("application/json")
+                .log().all()
+
+        .when()
+                .delete(uri + "/" + petId)
+        .then()
+                .log().all()
+                .statusCode(200)
+                .body("code", is (200))
+                .body("type", is ("unknown"))
+        ;
+        System.out.println("Foi Excluido com sucesso!");
+    }
 }
